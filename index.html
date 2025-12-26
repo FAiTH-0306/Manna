@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>만나의 기록</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        :root {
+            --primary-color: #d4a373; /* 차분한 웜 골드 */
+            --bg-color: #f9f7f2;      /* 포근한 크림색 배경 */
+            --card-bg: #ffffff;
+            --text-main: #3d352c;     /* 진한 브라운 그레이 */
+            --text-sub: #8b8276;
+            --header-bg: rgba(254, 253, 251, 0.95);
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- 컴팩트 & 디테일 헤더 --- */
+        header {
+            background: var(--header-bg);
+            /* 은은한 미세 도트 패턴 */
+            background-image: radial-gradient(rgba(212, 163, 115, 0.15) 1px, transparent 1px);
+            background-size: 15px 15px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            
+            padding: 2.2rem 1.5rem; /* 컴팩트한 높이 */
+            text-align: center;
+            border-bottom: 1px solid rgba(212, 163, 115, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            flex-direction: column; /* 세로 정렬 */
+            align-items: center;
+            gap: 8px; /* 메인과 서브 사이 간격 */
+        }
+
+        header h1 {
+            color: #d89256; 
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            display: inline-block;
+        }
+        /* 제목 양옆 작은 점 장식 */
+        header h1::before, header h1::after {
+            content: '•';
+            color: var(--primary-color);
+            margin: 0 10px;
+            font-size: 1rem;
+            vertical-align: middle;
+        }
+
+        header p {
+            margin: 0;
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            font-weight: 400;
+            letter-spacing: -0.2px;
+            opacity: 0.9;
+        }
+
+        /* --- 갤러리 영역 --- */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 35px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 12px 35px rgba(74, 66, 56, 0.07); 
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(74, 66, 56, 0.13);
+        }
+
+        .card img {
+            width: 100%;
+            height: 260px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.6s ease;
+        }
+
+        .card:hover img {
+            transform: scale(1.06);
+        }
+
+        .card-body {
+            padding: 1.8rem;
+        }
+
+        .card-body h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .card-body p {
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        /* --- 슬라이드쇼 모달 --- */
+        #slideshowModal {
+            display: none;
+            position: fixed; z-index: 9999;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(28, 25, 23, 0.98); 
+            backdrop-filter: blur(10px);
+            justify-content: center; align-items: center;
+        }
+
+        #slideshowContainer {
+            position: relative;
+            width: 85%;
+            max-width: 900px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #slideshowImg, #slideshowVideo {
+            width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 0 60px rgba(0,0,0,0.6);
+            display: none;
+        }
+
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: 0.3s;
+            font-size: 20px;
+            z-index: 10010;
+        }
+
+        .prev:hover, .next:hover { background: var(--primary-color); }
+        .prev { left: -80px; }
+        .next { right: -80px; }
+
+        .close-slideshow {
+            position: absolute; top: 25px; right: 30px; 
+            color: white; font-size: 35px; cursor: pointer; opacity: 0.6;
+        }
+
+        .swipe-hint {
+            position: absolute; bottom: 25px; color: rgba(255,255,255,0.4);
+            font-size: 0.85rem;
+        }
+
+        @media screen and (max-width: 1100px) {
+            .prev, .next { display: none; }
+            #slideshowContainer { width: 95%; }
+            header h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>지금까지의 만나</h1>
+    <p>함께한 소중한 순간들</p>
+</header>
+
+<div class="container">
+    <div class="gallery">
+      <div class="card" onclick="openSlideshow([
+         '24년 11월 첫전도/Photo 01.jpg', '24년 11월 첫전도/Photo 02.jpg', '24년 11월 첫전도/Photo 03.jpg',
+         '24년 11월 첫전도/Photo 04.jpg', '24년 11월 첫전도/Photo 05.jpg', '24년 11월 첫전도/Photo 06.jpg',
+         '24년 11월 첫전도/Photo 07.jpg', '24년 11월 첫전도/Photo 08.jpg', '24년 11월 첫전도/Photo 09.jpg',
+         '24년 11월 첫전도/Photo 10.jpg', '24년 11월 첫전도/Photo 11.jpg', '24년 11월 첫전도/Photo 12.jpg',
+         '24년 11월 첫전도/Photo 13.jpg', '24년 11월 첫전도/Photo 14.jpg', '24년 11월 첫전도/Photo 15.jpg',
+         '24년 11월 첫전도/Photo 16.jpg', '24년 11월 첫전도/Photo 17.jpg', '24년 11월 첫전도/Photo 18.jpg',
+         '24년 11월 첫전도/Photo 19.jpg', '24년 11월 첫전도/Photo 20.jpg', '24년 11월 첫전도/Photo 21.jpg'
+     ])">
+         <img src="24년 11월 첫전도/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2024년 11월 만나 첫전도🙏</h3>
+             <p>2024.11.10 | 사진 21장</p>
+         </div>
+     </div>
+
+      <div class="card" onclick="openSlideshow([
+         '24년 12월 성탄전도/Photo 01.jpg', '24년 12월 성탄전도/Photo 02.jpg', '24년 12월 성탄전도/Photo 02.jpg',
+         '24년 12월 성탄전도/Photo 04.jpg', '24년 12월 성탄전도/Photo 05.jpg', '24년 12월 성탄전도/Photo 06.jpg',
+         '24년 12월 성탄전도/Photo 07.jpg', '24년 12월 성탄전도/Photo 08.jpg', '24년 12월 성탄전도/Photo 09.jpg',
+         '24년 12월 성탄전도/Photo 10.jpg', '24년 12월 성탄전도/Photo 11.jpg'
+     ])">
+         <img src="24년 12월 성탄전도/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2024년 12월 리즈 성탄전도🎄</h3>
+             <p>2024.12.21 | 사진 11장</p>
+         </div>
+     </div>
+
+      <div class="card" onclick="openSlideshow([
+         '25년 3월 전도/Photo 01.jpg', '25년 3월 전도/Photo 02.jpg', '25년 3월 전도/Photo 03.jpg',
+         '25년 3월 전도/Photo 04.jpg', '25년 3월 전도/Photo 05.jpg', '25년 3월 전도/Photo 06.jpg',
+         '25년 3월 전도/Photo 07.jpg', '25년 3월 전도/Photo 08.jpg', '25년 3월 전도/Photo 09.jpg',
+         '25년 3월 전도/Photo 10.jpg'
+     ])">
+         <img src="25년 3월 전도/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2025년 3월 전도🌸</h3>
+             <p>2025.03.29 | 사진 10장</p>
+         </div>
+     </div>
+
+      <div class="card" onclick="openSlideshow([
+         '25년 7월 전도/Photo 01.jpg', '25년 7월 전도/Photo 02.jpg', '25년 7월 전도/Photo 03.jpg',
+         '25년 7월 전도/Photo 04.jpg', '25년 7월 전도/Photo 05.jpg', '25년 7월 전도/Photo 06.jpg',
+         '25년 7월 전도/Photo 07.jpg'
+     ])">
+         <img src="25년 7월 전도/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2025년 7월 전도🌻</h3>
+             <p>2025.07.05 | 사진 7장</p>
+         </div>
+     </div>
+
+      <div class="card" onclick="openSlideshow([
+         '25년 웨이브온 회의/Photo 01.jpg', '25년 웨이브온 회의/Photo 02.jpg', '25년 웨이브온 회의/Photo 03.jpg',
+     ])">
+         <img src="25년 웨이브온 회의/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2025년 웨이브온 회의🐳</h3>
+             <p>2025.08.31 | 사진 3장</p>
+         </div>
+     </div>
+
+      <div class="card" onclick="openSlideshow([
+         '25년 10월 전도/Photo 01.jpg', '25년 10월 전도/Photo 02.jpg', '25년 10월 전도/Photo 03.jpg', '25년 10월 전도/Photo 04.jpg',
+         '25년 10월 전도/Photo 05.jpg', '25년 10월 전도/Photo 06.jpg', '25년 10월 전도/Photo 07.jpg', '25년 10월 전도/Photo 08.jpg',
+         '25년 10월 전도/Photo 09.jpg', '25년 10월 전도/Photo 10.jpg', '25년 10월 전도/Photo 11.jpg', '25년 10월 전도/Photo 12.jpg',
+         '25년 10월 전도/Photo 13.jpg', '25년 10월 전도/Photo 14.jpg', '25년 10월 전도/Photo 15.jpg', '25년 10월 전도/Photo 16.jpg',
+         '25년 10월 전도/Photo 17.jpg', '25년 10월 전도/Photo 18.jpg', '25년 10월 전도/Photo 19.jpg',
+     ])">
+         <img src="25년 10월 전도/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2025년 10월 고등부연합전도🍂</h3>
+             <p>2025.10.25 사진 | 19장</p>
+         </div>
+     </div>
+
+      <div class="card" onclick="openSlideshow([
+         '25년 11월 회식/Photo 01.jpg', '25년 11월 회식/Photo 02.gif', '25년 11월 회식/Video 01.mp4',
+     ])">
+         <img src="25년 11월 회식/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2025년 11월 회식🍗</h3>
+             <p>2025.11.16 사진 | 2장,  동영상 | 1개</p>
+         </div>
+     </div>
+
+
+      <div class="card" onclick="openSlideshow([
+         '25년 12월 성탄전도/Photo 01.jpg', '25년 12월 성탄전도/Photo 02.jpg', '25년 12월 성탄전도/Photo 03.jpg',
+         '25년 12월 성탄전도/Photo 04.jpg', '25년 12월 성탄전도/Photo 05.jpg', '25년 12월 성탄전도/Photo 06.jpg',
+         '25년 12월 성탄전도/Photo 07.jpg', '25년 12월 성탄전도/Photo 08.jpg', '25년 12월 성탄전도/Photo 09.jpg',
+         '25년 12월 성탄전도/Photo 10.jpg', '25년 12월 성탄전도/Photo 11.jpg', '25년 12월 성탄전도/Photo 12.jpg',
+         '25년 12월 성탄전도/Photo 13.jpg', '25년 12월 성탄전도/Photo 14.jpg', '25년 12월 성탄전도/Photo 15.jpg',
+         '25년 12월 성탄전도/Photo 16.jpg', '25년 12월 성탄전도/Photo 17.jpg', '25년 12월 성탄전도/Photo 18.jpg',
+         '25년 12월 성탄전도/Photo 19.jpg', '25년 12월 성탄전도/Photo 20.jpg', '25년 12월 성탄전도/Photo 21.jpg',
+         '25년 12월 성탄전도/Photo 22.jpg', '25년 12월 성탄전도/Photo 23.jpg', '25년 12월 성탄전도/Photo 24.jpg',
+         '25년 12월 성탄전도/Photo 25.jpg', '25년 12월 성탄전도/Photo 26.jpg', '25년 12월 성탄전도/Photo 27.jpg',
+         '25년 12월 성탄전도/Photo 28.jpg', '25년 12월 성탄전도/Photo 29.jpg', '25년 12월 성탄전도/Photo 30.jpg',
+         '25년 12월 성탄전도/Photo 31.jpg', '25년 12월 성탄전도/Photo 32.jpg', '25년 12월 성탄전도/Photo 33.jpg',
+         '25년 12월 성탄전도/Photo 34.jpg', '25년 12월 성탄전도/Photo 35.jpg'
+     ])">
+         <img src="25년 12월 성탄전도/Photo 01.jpg" alt="11월 첫전도 대표사진">
+         <div class="card-body">
+             <h3>2025년 12월 리즈 성탄전도🎅</h3>
+             <p>2025.12.20 | 사진 35장</p>
+         </div>
+     </div>
+
+
+
+
+
+
+<div id="slideshowModal">
+    <span class="close-slideshow" onclick="closeSlideshow()">&times;</span>
+    <div id="slideshowContainer">
+        <img id="slideshowImg">
+        <video id="slideshowVideo" controls playsinline></video>
+        
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+    </div>
+    <div class="swipe-hint">좌우로 밀어서 넘기기</div>
+</div>
+
+<script>
+    let slideIndex = 0;
+    let currentItems = [];
+    let touchstartX = 0;
+    let touchendX = 0;
+
+    function openSlideshow(items) {
+        if (!items || items.length === 0) return;
+        currentItems = items;
+        slideIndex = 0;
+        document.getElementById("slideshowModal").style.display = "flex";
+        showSlides(slideIndex);
+    }
+
+    function closeSlideshow() {
+        const videoTag = document.getElementById("slideshowVideo");
+        if (videoTag) {
+            videoTag.pause();
+            videoTag.src = "";
+        }
+        document.getElementById("slideshowModal").style.display = "none";
+    }
+
+    function plusSlides(n) {
+        showSlides(slideIndex += n);
+    }
+
+    function showSlides(n) {
+        const imgTag = document.getElementById("slideshowImg");
+        const videoTag = document.getElementById("slideshowVideo");
+
+        if (n >= currentItems.length) slideIndex = 0;
+        if (n < 0) slideIndex = currentItems.length - 1;
+
+        const currentItem = currentItems[slideIndex];
+        const isVideo = currentItem.toLowerCase().endsWith('.mp4') || 
+                        currentItem.toLowerCase().endsWith('.mov') || 
+                        currentItem.toLowerCase().endsWith('.webm');
+
+        if (isVideo) {
+            imgTag.style.display = "none";
+            videoTag.style.display = "block";
+            videoTag.src = currentItem;
+            videoTag.load();
+            videoTag.play().catch(e => {});
+        } else {
+            videoTag.pause();
+            videoTag.style.display = "none";
+            imgTag.style.display = "block";
+            imgTag.src = currentItem;
+        }
+    }
+
+    // 스와이프 기능
+    const modal = document.getElementById('slideshowModal');
+    modal.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
+    modal.addEventListener('touchend', e => { 
+        touchendX = e.changedTouches[0].screenX; 
+        if (touchendX < touchstartX - 50) plusSlides(1);
+        if (touchendX > touchstartX + 50) plusSlides(-1);
+    }, {passive: true});
+
+    // 배경 클릭 시 닫기
+    window.onclick = function(e) { if (e.target == modal) closeSlideshow(); }
+</script>
+
+</body>
+</html>
